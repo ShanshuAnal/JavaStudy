@@ -4,7 +4,7 @@
 
 [关于泛型](D:\study\java\notes\集合\泛型.md)
 
-<img src="../../assets/Collection/image-20241210155857856.png" alt="image-20241210155857856" style="zoom:67%;" />
+<img src="https://typora-image-jiege.oss-cn-hangzhou.aliyuncs.com/jiegeisstudyingjava-12581/image-20241210155857856.png" alt="image-20241210155857856" style="zoom:67%;" />
 
 Collection是java集合框架的顶级接口，它提供了一组方法，用于存储和操作一组对象。Collection接口定义了集合的基本行为，集合可以看作是一个对象的容器，存储的对象称为元素。
 
