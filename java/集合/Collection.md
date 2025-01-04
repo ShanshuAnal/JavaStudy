@@ -1,6 +1,6 @@
 # Collection
 
-[collection的继承结构](D:\study\java\notes\collection.mdj)
+[collection的继承结构](D:\study\java\集合\collection.mdj)
 
 [关于泛型](D:\study\java\notes\集合\泛型.md)
 

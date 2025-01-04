@@ -1,6 +1,8 @@
 # LinkedList
 
-`LinkedList` 是 Java 中 `List` 接口的一个实现类，它实现了双向链表的数据结构。每个元素都被称为 **节点 (Node)**，每个节点包含 **数据部分** 和 **前向引用**以及 **后向引用**。
+`LinkedList` 是 Java 中 `List` 、`Deque`接口的一个实现类，它实现了双向链表的数据结构，它可以被当作栈、堆、队列、双向链表来使用。
+
+每个元素都被称为 **节点 (Node)**，每个节点包含 **数据部分** 和 **前向引用**以及 **后向引用**。
 
 - 对于插入、删除等操作（尤其是在头部或尾部）非常高效
 - 由于访问元素需要遍历链表，因此随机访问性能较差
@@ -237,6 +239,76 @@ public E remove(int index) {
     return unlink(node(index));
 }
 ```
+
+
+
+- 删除头节点
+
+```java
+public E removeFirst() {
+    final Node<E> f = first;
+    // 如果当前链表为null，抛出异常
+    if (f == null)
+        throw new NoSuchElementException();
+    return unlinkFirst(f);
+}
+
+private E unlinkFirst(Node<E> f) {
+    final E element = f.item;
+    // 获取头节点的下一个节点
+    final Node<E> next = f.next;
+    
+    // 将头节点的属性设置为null，帮助垃圾回收
+    f.item = null;
+    f.next = null;
+    
+    // 头节点后移
+    first = next;
+    
+    // 如果下个节点为null，那么就是空链表
+    if (next == null)
+        last = null;
+    else
+    // 将头节点的prev设置为null
+        next.prev = null;
+    size--;
+    modCount++;
+    return element;
+}
+```
+
+
+
+- 删除尾节点
+
+```java
+public E removeLast() {
+    final Node<E> l = last;
+    // 如果当前链表为null，抛出异常
+    if (l == null)
+        throw new NoSuchElementException();
+    return unlinkLast(l);
+}
+
+private E unlinkLast(Node<E> l) {
+    // assert l == last && l != null;
+    final E element = l.item;
+    final Node<E> prev = l.prev;
+    l.item = null;
+    l.prev = null; // help GC
+    last = prev;
+    if (prev == null)
+        first = null;
+    else
+        prev.next = null;
+    size--;
+    modCount++;
+    return element;
+}
+
+```
+
+
 
 
 

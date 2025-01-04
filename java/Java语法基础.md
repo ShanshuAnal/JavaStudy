@@ -57,46 +57,46 @@ Java结合了编译型和解释型语言的优点：
 
 ​	另外，final 修饰的成员变量必须有一个默认值，否则编译器将会提醒没有初始化。
 
-​	final 和 static 一起修饰的成员变量叫做常量，常量名必须全部大写。
+​	final 和 static 一起修饰的成员变量叫做**常量**，常量名必须全部大写。
 
 （2）final方法：被 final 修饰的方法不能被重写。
 
 （3）final类：如果一个类使用了 final 关键字修饰，那么它就无法被继承。
 
-```java
-// 1. 一个final类 和 一个类不是final但方法全是final的有什么区别
-// 第一个final类是不可继承的，方法无法被重写；第二个是可以被继承的，然后追加一些final方法
+- 一个**final类** 和 一个类**不是final但方法全是final**的有什么区别
+  第一个final类是不可继承的，方法无法被重写；第二个是可以被继承的，然后追加一些final方法
 
-// 2. 类是final的，并不意味着类的对象是不可变的
-Writer w = new Writer();
-w.setName("wxb");
-```
+- 类是final的，并不意味着类的对象是不可变的
 
-​	比如String类就是被设计成final的
+  ```java
+  Writer w = new Writer();
+  w.setName("wxb");
+  ```
 
-​	原因如下：
+  比如String类就是被设计成final的
 
-- 为了实现字符串常量池
+  原因如下：
 
-​	字符串常量池是 Java 堆内存中一个特殊的存储区域，当创建一个 String 对象时，假如此字符串在常量池中不	存在，那么就创建一个；假如已经存，就不会再创建了，而是直接引用已经存在的对象。这样做能够减少 	JVM 的内存开销，提高效率。
+  - 为了实现字符串常量池
 
-- 为了线程安全
+    字符串常量池是 Java 堆内存中一个特殊的存储区域，当创建一个 String 对象时，假如此字符串在常量池中不存在，那么就创建一个；假如已经存，就不会再创建了，而是直接引用已经存在的对象。这样做能够减少JVM 的内存开销，提高效率。
 
-​	String 是不可变的，就可以在多个线程之间共享，不需要同步处理
+  - 为了线程安全
 
-​	因此，当我们调用 String 类的任何方法（比如说 `trim()`、`substring()`、`toLowerCase()`）时，总会返回	一个新的对象，而不影响之前的值。
+    String 是不可变的，就可以在多个线程之间共享，不需要同步处理
 
-```java
-String cmower = "沉默王二，一枚有趣的程序员";
-cmower.substring(0,4);
-System.out.println(cmower);// 沉默王二，一枚有趣的程序员
-```
+    因此，当我们调用 String 类的任何方法（比如说 `trim()`、`substring()`、`toLowerCase()`）时，总会返回	一个新的对象，而不影响之前的值。
 
-​	虽然调用 `substring()` 方法对 cmower 进行了截取，但 cmower 的值没有改变。除了 String 类，包装器类 	Integer、Long 等也是不可变类
+    ```java
+    String cmower = "沉默王二，一枚有趣的程序员";
+    cmower.substring(0,4);
+    System.out.println(cmower);// 沉默王二，一枚有趣的程序员
+    ```
 
-- 为了 HashCode 的不可变性
+    虽然调用 `substring()` 方法对 cmower 进行了截取，但 cmower 的值没有改变。除了 String 类，包装器类Integer、Long 等也是不可变类
 
-​	因为字符串是不可变的，所以在它创建的时候，其 hashCode 就被缓存了，因此非常适合作为哈希值（比如	说作为 HashMap的键），多次调用只返回同一个值，来提高效率。
+  - 为了 HashCode 的不可变性
+  - 因为字符串是不可变的，所以在它创建的时候，其 hashCode 就被缓存了，因此非常适合作为哈希值（比如说作为 HashMap的键），多次调用只返回同一个值，来提高效率。
 
 
 

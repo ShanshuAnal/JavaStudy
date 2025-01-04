@@ -314,6 +314,8 @@ public E set(int index, E element) {
 
 ##### 查找元素
 
+获取指定元素下标
+
 ```java
 public int indexOf(Object o) {
     return indexOfRange(o, 0, size);
@@ -392,21 +394,4 @@ public boolean contains(Object o) {
 | **删除**（`remove(int index)`）         | O(n)           | 删除指定位置的元素，后续元素需要**向前移动**，最坏情况下需要移动整个数组。 |
 | **删除**（`remove(Object o)`）          | O(n)           | 需要**查找元素位置**，然后删除，最坏情况下需要遍历整个数组。 |
 | **修改**（`set(int index, E e)`）       | O(1)           | 直接在指定位置进行修改，**常数时间**。                       |
-| **增加容量**（`grow()`）                | O(n)           | 当容量不足时，需要创建新数组并复制数据。                     |
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+| **增加容量**（`grow()`）                | O(n)           | 当容量不足时，需要创建新数组并复制数据。/》》>               |
