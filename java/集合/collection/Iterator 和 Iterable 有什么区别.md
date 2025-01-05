@@ -170,3 +170,65 @@ for (String element : collection) {
    - 通过 `Iterable`，集合类可以支持 `for-each` 语法，简化代码书写。
 5. **符合设计原则：**
    - 遵循接口隔离原则和单一职责原则，使代码清晰、易于维护。
+
+
+
+
+
+## 6. 不要再ForEach中删除元素
+
+# forEach循环陷阱
+
+![img](https://typora-image-jiege.oss-cn-hangzhou.aliyuncs.com/jiegeisstudyingjava-12581/fail-fast-20230428073517.png)
+
+
+
+原因很简单，因为`forEach`是个语法糖，底层是由迭代器配合`while`循环实现的。
+
+在使用迭代器遍历对象的时候，一定要用迭代器来进行删除`remove`操作，否则会抛出并发修改异常`ConcurrentModificationException`
+
+> 具体：
+>
+> 迭代器会维护一个`expectedModCount`属性字段来记录集合被修改的次数，如果是在`forEach`循环执行删除操作，会导致`expectedModCount`和实际的`modCount`属性值不一致，从而导致了迭代器的`hasNext`和`next`方法抛出并发修改一场。
+>
+> 应使用迭代器来进行删除操作，它会在删除元素后更新迭代器状态，确保循环的正确性。
+
+
+
+使用最简单的`for`循环虽然可以避开`fast-fail`机制，但是还是有问题的
+
+```java
+List<Integer> list = new ArrayList<>();
+list.add(1);
+list.add(2);
+list.add(3);
+for (int i = 0; i < list.size(); i++) {
+	int num = list.get(i);
+	if (num == 1) {
+		list.remove(num);
+	}
+}
+```
+
+第一次循环，`i`为0，`list.size()`为3，`num`为0当执行完`remove`方法后，进入下一个循环
+
+此时`i` 为1，`list.size()`由于删除了一个元素，大小为2，`num`为3，此时2直接被跳过了
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
