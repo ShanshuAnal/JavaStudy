@@ -28,18 +28,18 @@ public class HashMap<K,V> extends AbstractMap<K,V>
     @java.io.Serial
     private static final long serialVersionUID = 362498820763181265L;
     
-    transient Node<K,V>[] table;      // 存储元素的数组（哈希桶）
+    transient Node<K,V>[] table;      // 存储元素的数组（哈希桶数组）
 	transient int size;              // 当前键值对的数量
 	int threshold;                   // 扩容阈值（容量 * 负载因子）
 	final float loadFactor;          // 负载因子
 }
 ```
 
-- **哈希桶（table）**：
+- **哈希桶数组（table）**：
   `Node<K, V>[]` 数组是存储键值对的核心结构。每个位置是一个桶，桶中元素可能是链表或红黑树。
 
 - **负载因子（loadFactor）**：
-  控制扩容的阈值，默认值为 `0.75`，表示哈希桶填充到 75% 时会触发扩容，这是时间和空间效率的一个平衡点
+  控制扩容的阈值，默认值为 `0.75`，表示哈希表填充到 75% 时会触发扩容，这是时间和空间效率的一个平衡点
 
 - **扩容阈值（threshold）**：
   用于判断是否需要扩容，值为 `capacity * loadFactor`，初始时由 `tableSizeFor(initialCapacity)` 计算得出。
@@ -81,7 +81,7 @@ public HashMap() {
 
 在插入元素前，`table`一直是`null`
 
-当首次插入元素后，会调用`resize()`分配哈希桶，默认容量是16，扩容阈值是 16 * 0.75 = **12**
+当首次插入元素后，会调用`resize()`分配哈希表，默认容量是16，扩容阈值是 16 * 0.75 = **12**
 
 ```java
 if ((tab = table) == null || (n = tab.length) == 0) {
@@ -138,7 +138,7 @@ static final int tableSizeFor(int cap) {
 }
 ```
 
-初始化之后，哈希桶也是`null`，它的分配也是延迟到首次调用`put`方法的时候。也就是这种构造方法实际上只设置了`threshold`。
+初始化之后，哈希表也是`null`，它的分配也是延迟到首次调用`put`方法的时候。也就是这种构造方法实际上只设置了`threshold`。
 
 
 
@@ -155,7 +155,7 @@ public HashMap(Map<? extends K, ? extends V> m) {
 
 > 1. 为什么容量一定是2的幂次？
 >
->    在`HashMap`中，元素在**哈希桶中的索引下标**是这样计算出来的
+>    在`HashMap`中，元素在**哈希表中的索引下标**是这样计算出来的
 >
 >    ```java
 >    hash = hash(key);
@@ -168,13 +168,13 @@ public HashMap(Map<? extends K, ? extends V> m) {
 >
 >    
 >
->    与操作的结果就是**将哈希值的高位全部归0，只保留低位值，用于做哈希桶下标**（n - 1就相当于一个底位掩码）
+>    与操作的结果就是**将哈希值的高位全部归0，只保留低位值，用于做索引下标**（n - 1就相当于一个底位掩码）
 >
 >    例子：
 >
 >    ​	比如有哈希值 `10100101 11000100 00100101`，用它做取模运算，
 >
->    ​	哈希桶长度为16，16 - 1是15 `00000000 00000000 00001111`（高位用 0 来补齐）
+>    ​	哈希表容量为16，16 - 1是15 `00000000 00000000 00001111`（高位用 0 来补齐）
 >
 >    ​	那么有：
 >
@@ -208,7 +208,7 @@ public HashMap(Map<? extends K, ? extends V> m) {
 >
 >    - **减少不必要的内存**
 >
->      如果初始化后分配默认大小的哈希桶但不用，会浪费内存。延迟加载保证了只有在真正需要存储数据的时候，才分配哈希桶，从而**节省内存**
+>      如果初始化后分配默认大小的数组但不用，会浪费内存。延迟加载保证了只有在真正需要存储数据的时候，才分配数组，从而**节省内存**
 >
 >    - **提高性能**（避免不必要的初始化）
 >
@@ -236,7 +236,7 @@ public HashMap(Map<? extends K, ? extends V> m) {
 >    
 > - **较大的负载因子**
 >    
->   哈希桶越满则哈希冲突发生的概率就越大
+>   数组越满则哈希冲突发生的概率就越大
 >    
 >   哈希冲突会导致链表或红黑树越来越庞大，从而查找性能会退化
 
@@ -244,7 +244,9 @@ public HashMap(Map<? extends K, ? extends V> m) {
 
 #### 2.2 计算哈希值
 
-hash 方法的主要作用是将 `key` 的 hashCode 值进行处理，得到最终的哈希值，用于确定该键值对在哈希桶数组的**索引下标**
+hash 方法的主要作用是将 `key` 的 hashCode 值进行处理，得到最终的哈希值，用于确定该键值对在哈希桶数组的**索引下标**。
+
+当`key`为`null`时，其哈希值直接为0。
 
 ```java
 static final int hash(Object key) {
@@ -269,7 +271,7 @@ static final int hash(Object key) {
 
 理论上哈希值是一个`int`类型，范围从-2147483648 到 2147483648，前后加起来近40亿的映射空间，只要哈希值映射得比较松散，一般是不会出现哈希碰撞，但是一个40亿长度的数组内存是放不下的。
 
-`HashMap`在默认初始化第一次添加元素的时候，哈希桶容量大小只有16，所以哈希值是不可以直接拿来用的，用之前要**和数组的长度做取模运算**`index = (n - 1) & hash`，这个取模操作的目的是将哈希值映射到桶的索引上
+`HashMap`在默认初始化第一次添加元素的时候，数组容量大小只有16，所以哈希值是不可以直接拿来用的，用之前要**和数组的长度做取模运算**`index = (n - 1) & hash`，这个取模操作的目的是将哈希值映射到桶的索引上
 
 > 在计算机中，取模运算和取余运算是不一样的，它们的差别在于，当被除数为负数的时候
 >
@@ -292,7 +294,7 @@ static final int hash(Object key) {
 
 由于混合了哈希码的的高位和低位，从而掺杂了部分高位的特征，使得高位的信息也得到了保留，所以低位的随机性加大了。
 
-再与哈希桶容量 - 1进行取模运算，得到索引下标 `00000000 00000000 00000000 00000101`，也就是 **5**
+再与数组容量 - 1进行取模运算，得到索引下标 `00000000 00000000 00000000 00000101`，也就是 **5**
 
 
 
@@ -310,11 +312,17 @@ static final int hash(Object key) {
 
 
 
+
+
+
+
 #### 2.3 添加元素
 
 将一个键值对插入到`HashMap`中就可以用`put`方法；想修改某个键对应的值时，也可以直接用`put`方法，因为键是唯一的，所以再次`put`的时候会覆盖掉原来的值。
 
 下面详细剖析 `HashMap` 的 `put()` 方法及其核心实现 `putVal()` 方法，包括了哈希计算、元素插入、冲突处理和扩容触发机制等关键部分。
+
+注意，由于当`key`为`null`时哈希值为0，所以桶索引下标为`(n - 1) & hash = 0`，也就是说 null 会插入到 HashMap 的第一位。
 
 ```java
 public V put(K key, V value) {
@@ -330,7 +338,7 @@ public V put(K key, V value) {
 final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
     Node<K,V>[] tab; Node<K,V> p; int n, i;
     
-    // 用于判断哈希桶是否已经初始化，若未初始化则调用resize进行延迟初始化
+    // 用于判断数组是否已经初始化，若未初始化则调用resize进行延迟初始化
     if ((tab = table) == null || (n = tab.length) == 0)
         n = (tab = resize()).length;
     
@@ -407,6 +415,14 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
 
 
 
+注意添加新节点处不是直接`new`一个节点对象，而是调用`newNode`方法，由该方法创建并返回。虽然这个在HashMap中没什么用，但是在`LinkedHashMap`中进行了重写，用于实现顺序插入。
+
+```java
+Node<K,V> newNode(int hash, K key, V value, Node<K,V> next) {
+    return new Node<>(hash, key, value, next);
+}
+```
+
 Java 8 中，当链表的节点数超过一个阈值（8）时，链表将转为红黑树（节点为TreeNode），红黑树是一种高效的平衡树结构，能够在 `O(log n)` 的时间内完成插入、删除和查找等操作。这种结构在节点数很多时，可以提高 HashMap 的性能和可伸缩性。
 
 > 因为TreeNode的大小大约是常规链表节点的两倍，所以只有当桶内包含足够多的节点时才使用红黑树
@@ -438,7 +454,7 @@ final Node<K,V> removeNode(int hash, Object key, Object value,
     Node<K,V> p; 
     int n, index;
     
-    // 快速定位到哈希桶tab[index]
+    // 快速定位到数组tab[index]
     if ((tab = table) != null && (n = tab.length) > 0 &&
         (p = tab[index = (n - 1) & hash]) != null) {
         
@@ -502,9 +518,75 @@ final Node<K,V> removeNode(int hash, Object key, Object value,
 
 #### 2.5 查询元素
 
+```java
+// 根据键获取对应的值。
+public V get(Object key) {
+    Node<K,V> e;
+    // 调用getNode方法获取目标节点，如果节点存在返回其值，否则返回null
+    return (e = getNode(key)) == null ? null : e.value;
+}
+```
 
 
 
+**主要流程**：
+
+1. 数组定位
+
+2. 如果哈希表`table`不为空且桶的数量 `n > 0`
+
+   - 计算哈希值 `hash = hash(key)`
+   - 定位桶的索引：`(n - 1) & hash`
+
+3. 检查桶头节点
+
+   如果头节点 `first` 的哈希值与键匹配，直接返回头节点
+
+4. 遍历后续节点
+
+   如果存在后续节点，判断结构类型：
+
+   - **红黑树**：调用 `getTreeNode(hash, key)` 方法在红黑树中查找目标节点
+   - **链表**：遍历链表逐个匹配节点，依次比较哈希值和键
+
+5. 未找到节点
+
+   返回 `null`
+
+```java
+// 根据键查找对应的节点
+final Node<K,V> getNode(Object key) {
+    Node<K,V>[] tab; Node<K,V> first, e; int n, hash; K k;
+    
+    // 检查哈希表是否初始化，且对应索引下标的桶是否有存储元素
+    if ((tab = table) != null && (n = tab.length) > 0 &&
+        (first = tab[(n - 1) & (hash = hash(key))]) != null) {
+        
+        // 检查第一个节点是否能匹配上，匹配上就直接返回第一个节点
+        if (first.hash == hash && // always check first node
+            ((k = first.key) == key || (key != null && key.equals(k))))
+            return first;
+        
+        // 如果有后续节点，那么继续检查
+        if ((e = first.next) != null) {
+            
+            // 如果是树节点，调用getTreeNode查找目标节点
+            if (first instanceof TreeNode)
+                return ((TreeNode<K,V>)first).getTreeNode(hash, key);
+            
+            // 如果是链表，则逐一进行匹配
+            do {
+                if (e.hash == hash &&
+                    ((k = e.key) == key || (key != null && key.equals(k))))
+                    return e;
+            } while ((e = e.next) != null);
+        }
+    }
+    
+    // 未找到匹配节点，直接返回null
+    return null;
+}
+```
 
 
 
@@ -520,7 +602,7 @@ final Node<K,V> removeNode(int hash, Object key, Object value,
 
     - 当前容量 ≥ 最大容量
 
-      直接将**新扩容阈值**设置为`Integer.MAX_VALUE`，然后**直接返回**当前哈希桶
+      直接将**新扩容阈值**设置为`Integer.MAX_VALUE`，然后**直接返回**当前哈希表
 
     - 否则将**新容量设置为当前容量的2倍**
 
@@ -538,9 +620,9 @@ final Node<K,V> removeNode(int hash, Object key, Object value,
 - 如果新扩容阈值还没设置，那么就根据公式 **新容量 * 负载因子** 来计算
   如果 新容量 或者 新扩容阈值 ≥ 最大容量，那么将**新扩容阈值**设置为 `Integer.MAX_VALUE`
 
-- 创建新的哈希桶，容量为计算出的**新容量**，然后将新的哈希桶数组赋值给该哈希表对象的`table`
+- 创建新的数组，容量为计算出的**新容量**，然后将新的数组赋值给该哈希表对象的`table`
 
-- 遍历原哈希桶 `oldTab` 中的每个桶，将其中的元素迁移到新桶中。
+- 遍历原数组 `oldTab` 中的每个桶，将其中的元素迁移到新桶中。
 
 
 ```java
@@ -588,15 +670,15 @@ final Node<K,V>[] resize() {
     }
     threshold = newThr;
     
-    // 创建新的哈希桶数组
+    // 创建新数组
     @SuppressWarnings({"rawtypes","unchecked"})
     Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
     table = newTab;
     
-    // 将原有数据迁移到新哈希桶
-    // 如果旧哈希桶不为空
+    // 将原有数据迁移到新哈希表
+    // 如果旧哈希表不为空
     if (oldTab != null) {
-        // 遍历原哈希桶 oldTab 中的每个桶，将其中的元素迁移到新桶中
+        // 遍历原哈希表 oldTab 中的每个桶，将其中的元素迁移到新桶中
         for (int j = 0; j < oldCap; ++j) {
             Node<K,V> e;
             // 如果该元素不为空
@@ -652,14 +734,14 @@ final Node<K,V>[] resize() {
                     
                     // 如果低位链表不为空
                     // 就把低位链表的尾节点指向null，以便垃圾回收
-                    // 然后将低位链表作为新哈希桶对应位置（原位置）的元素
+                    // 然后将低位链表作为新哈希表对应位置（原位置）的元素
                     if (loTail != null) {
                         loTail.next = null;
                         newTab[j] = loHead;
                     }
                     // 如果高位链表不为空
                     // 就把高位链表的尾节点指向null，以便垃圾回收
-                    // 然后将高位链表作为新哈希桶对应位置（原位置 + 旧容量）的元素 
+                    // 然后将高位链表作为新哈希表对应位置（原位置 + 旧容量）的元素 
                     if (hiTail != null) {
                         hiTail.next = null;
                         newTab[j + oldCap] = hiHead;
@@ -676,15 +758,15 @@ final Node<K,V>[] resize() {
 
 1. **为什么要扩容**
 
-`HashMap` 的核心思想是通过哈希函数将键值对分布到数组的不同桶中。当哈希桶装满时，多个元素会被分配到同一个桶，形成链表或红黑树。冲突越多，查找效率就越差。
+`HashMap` 的核心思想是通过哈希函数将键值对分布到数组的不同桶中。当哈希表装满时，多个元素会被分配到同一个桶，形成链表或红黑树。冲突越多，查找效率就越差。
 
-扩容的必要性就在于，它保证了哈希桶的负载均匀分布，减少哈希冲突，维持哈希表的查找高效率
+扩容的必要性就在于，它保证了哈希表的负载均匀分布，减少哈希冲突，维持哈希表的查找高效率
 
 
 
 2. **为什么扩容是翻倍**
 
-- **快速分布新的哈希桶**（JDK8+）
+- **快速分布新的哈希表**（JDK8+）
 
   容量翻倍后，不用重新计算哈希值，可以有效减少冲突。只要看原来hash值新增的那个bit是1还是0
 
@@ -699,12 +781,12 @@ final Node<K,V>[] resize() {
   }
   ```
 
-  > 当前哈希桶容量为16
+  > 当前哈希表容量为16
   >
   > 假设key1的哈希值最后8位是0000 0101，key2的哈希值最后八位是 0001 0101，它们与 n-1 做与运算后的结果都是0101 = 5，都是在索引下标为5的桶中
   >
   >
-  > 扩容后哈希桶的容量为32
+  > 扩容后哈希表的容量为32
   >
   > key1和key2的哈希值重新与 n - 1 做与运算后的结果分别为 01010 = 5，11010 = 5 + 16 = 21
   >
@@ -722,7 +804,7 @@ final Node<K,V>[] resize() {
 
 3. **为什么重新分配元素**
 
-   扩容时将旧哈希桶的元素重新分不到新哈希桶中是为了保证元素在新哈希桶中的分布的均匀性，降低哈希冲突。
+   扩容时将旧哈希表的元素重新分不到新哈希表中是为了保证元素在新哈希表中的分布的均匀性，降低哈希冲突。
 
 
 
@@ -759,49 +841,12 @@ Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
 table = newTab;
 ```
 
-当线程A执行完`table = newTab;`但还没执行元素迁移时，该哈希表的哈希桶还是空的。若此时线程A被挂起，线程B开始执行`get`操作，那么肯定返回的是`null`了
+当线程A执行完`table = newTab;`但还没执行元素迁移时，该哈希表还是空的。若此时线程A被挂起，线程B开始执行`get`操作，那么肯定返回的是`null`了
 
 
 
 #### 3.4 小结
 
-`HashMap`线程不安全主要是因为它在进行插入、删除和扩容的时候，会对哈希桶的结构进行改变，从而破坏了其不变性。具体来说就是，如果在一个线程正在对`HashMap`的链表进行遍历的时候，另一个线程对该链表进行了修改，那么就会导致链表的结构发生变化，从而破坏了当前线程正在进行的遍历操作，可能导致遍历失败或者出现死循环等问题。
+`HashMap`线程不安全主要是因为它在进行插入、删除和扩容的时候，会对数组的结构进行改变，从而破坏了其不变性。具体来说就是，如果在一个线程正在对`HashMap`的链表进行遍历的时候，另一个线程对该链表进行了修改，那么就会导致链表的结构发生变化，从而破坏了当前线程正在进行的遍历操作，可能导致遍历失败或者出现死循环等问题。
 
 所以在多线程环境下，可用使用Java提供的线程安全的`HashMap`实现类`ConcurrentHashMap`，它的内部采用了分段锁，将整个Map拆分成了多个小的`HashMap`，每个小的HashMap都有自己的锁，不同线程可以同时访问不同的小Map，从而实现了线程安全。在进行插入、删除和扩容时，只需锁住当前的小Map，不会锁定真个Map，从而提高并发访问的效率。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
