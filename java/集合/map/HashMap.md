@@ -514,7 +514,7 @@ final Node<K,V> removeNode(int hash, Object key, Object value,
 }
 ```
 
-
+`afterNodeRemoval(node);`在HashMap中是空实现，在LinkedHashMap中用于将该节点从双链表中删除
 
 #### 2.5 查询元素
 

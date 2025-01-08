@@ -42,17 +42,19 @@ public class LinkedHashMap<K,V> extends HashMap<K,V> implements SequencedMap<K,V
 }
 ```
 
-属性 **`accessOrder`** 用于控制顺序模式
+布尔属性 **`accessOrder`** 用于控制顺序模式，默认为false。
 
 - `false`
 
-  插入顺序模式。节点总是追加到链表尾部，保持插入顺序
+  **插入顺序**模式。节点总是追加到链表尾部，保持插入顺序
 
 - `true`
 
-  访问顺序模式。最近被访问的节点会被移动到链表尾部，形成基于访问频率的顺序（适合 LRU 缓存）。
+  **访问顺序**模式。**最近被访问的节点会被移动到链表尾部**，形成基于访问频率的顺序（适合 **LRU** 缓存）。
 
-## 2. 插入元素
+
+
+### 2. 插入顺序
 
 `LinkedHashMap` 是可以维持插入顺序的，它并没有重写`HashMap`的`put`方法，因为实际存储在table数组中，不需要重写put方法，只要额外维护一个双向链表，所以重写的是内部方法`newNode`
 
@@ -96,9 +98,139 @@ private void linkNodeAtEnd(LinkedHashMap.Entry<K,V> p) {
 }
 ```
 
-所以整个插入的流程就是：使用put方法添加键值对，然后创建新节点并把它插入到双向链表的尾部，更新before和after属性，保证链表的顺序关系——由`linkNodeEnd`完成，接着就进行`put`剩下的操作，把节点插入到`table`数组中
+所以整个插入的流程就是：使用`put`方法添加键值对，然后创建新节点调用`newNode`，在`newNode`中进行创建，然后调用`linkNodeEnd`把它插入到双向链表的尾部，并更新before和after属性。接着就进行`put`剩下的操作，把节点插入到`table`数组中
 
 
+
+### 3. 访问顺序
+
+例子，便于理解什么是访问逻辑
+
+```java
+Map<String, String> linkedHashMap = new LinkedHashMap<>(16, .75f, true);
+linkedHashMap.put("沉", "沉默王二");
+linkedHashMap.put("默", "沉默王二");
+linkedHashMap.put("王", "沉默王二");
+linkedHashMap.put("二", "沉默王二");
+
+System.out.println(linkedHashMap);
+
+linkedHashMap.get("默");
+System.out.println(linkedHashMap);
+
+linkedHashMap.get("王");
+System.out.println(linkedHashMap);
+-----------------------------------------------------------------------------
+{沉=沉默王二, 默=沉默王二, 王=沉默王二, 二=沉默王二}
+{沉=沉默王二, 王=沉默王二, 二=沉默王二, 默=沉默王二}
+{沉=沉默王二, 二=沉默王二, 默=沉默王二, 王=沉默王二}
+```
+
+
+
+如果说要指定双链表维护的是访问顺序，那么就要将`accessOrder`在构造时指定为true
+
+```java
+LinkedHashMap<String, String> map = new LinkedHashMap<>(16, .75f, true);
+```
+
+
+
+主要用于维护访问顺序的的核心方法是`afterNodeAceess`。
+
+- 每次调用`put`方法进行键值对更新时会调用（第一次插入某个节点不会调用，因为`newNode`方法会调用`LinkNodeEnd`将其插入在双链表尾部）
+
+  在`HashMap`里面是空方法体
+
+  ```java
+  // putVal()
+  if (e != null) { // existing mapping for key
+      V oldValue = e.value;
+      if (!onlyIfAbsent || oldValue == null)
+          e.value = value;
+      afterNodeAccess(e);
+      return oldValue;
+  }
+  ```
+
+- 每次调用`get`方法时会调用
+
+  ```java
+  public V get(Object key) {
+      Node<K,V> e;
+      // getNode就是HashMap里的
+      if ((e = getNode(key)) == null)
+          return null;
+      // 这里的accessOrder为true
+      if (accessOrder)
+          afterNodeAccess(e);
+      return e.value;
+  }
+  ```
+
+  就是将双链表的某个节点插入尾部的操作
+
+  ```java
+  void afterNodeAccess(Node<K,V> e) {
+      LinkedHashMap.Entry<K,V> last;
+      // 如果是访问顺序且节点不在尾部
+      if (accessOrder && (last = tail) != e) { 
+          LinkedHashMap.Entry<K,V> p = (LinkedHashMap.Entry<K,V>) e;
+          
+          // 获取前驱后继节点
+          LinkedHashMap.Entry<K,V> b = p.before, a = p.after;
+          
+          // 从链表中移除当前节点
+          p.after = null;
+          if (b == null)
+              head = a; // 如果是头节点，更新 head 指针
+          else
+              b.after = a;
+          if (a != null)
+              a.before = b; // 如果有后继节点，更新其 before 指针
+          
+          // 将节点插入到链表尾部
+          if (last == null)
+              head = p; // 链表为空时，头尾均指向当前节点
+          else {
+              p.before = last; // 当前节点的 before 指向尾部节点
+              last.after = p;  // 尾部节点的 after 指向当前节点
+          }
+          tail = p; // 更新尾部指针
+          ++modCount;
+      }
+  }
+  
+  ```
+
+
+
+如果想要删除某一个节点，那么在删除操作完成之后，会调用`afterNodeRemoval`方法，这个方法会在双链表中删除这个节点。
+
+这就是一个双链表删除节点的操作
+
+```java
+void afterNodeRemoval(Node<K,V> e) { // unlink
+    LinkedHashMap.Entry<K,V> p = (LinkedHashMap.Entry<K,V>)e;
+    // 获取前驱后继节点
+    LinkedHashMap.Entry<K,V> b = p.before, a = p.after;
+    p.before = p.after = null;
+    
+    // 删除的是头节点，更新head
+    if (b == null)
+        head = a;
+    // 否则更新前驱节点
+    else
+        b.after = a;
+    
+    // 删除的是尾节点，更新tail
+    if (a == null)
+        tail = b;
+    // 否则更新后继节点
+    else
+        a.before = b;
+}
+```
 
 
 
