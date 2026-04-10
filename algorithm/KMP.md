@@ -12,9 +12,9 @@ KMP的主要思想是**当出现字符串不匹配时，可以知道一部分之
 
 前缀表是用来回退的，它记录了模式串与主串不匹配的时候，**模式串**应该从哪里开始重新匹配。
 
-<img src="https://code-thinking.cdn.bcebos.com/gifs/KMP%E7%B2%BE%E8%AE%B21.gif" alt="KMP详解1" style="zoom:67%;" />
+![KMP详解1](https://code-thinking.cdn.bcebos.com/gifs/KMP%E7%B2%BE%E8%AE%B21.gif)
 
-那么什么是前缀表：**记录下标i之前（包括i）的字符串中，有多大长度的相同前缀后缀。**
+那么什么是前缀表：**记录下标i之前`（包括i）`的字符串中，有多大长度的相同前缀后缀。**
 
 比如此时相同前缀长度为2，那么就从模式串下标为2的地方开始匹配
 
@@ -30,9 +30,7 @@ KMP的主要思想是**当出现字符串不匹配时，可以知道一部分之
 
 <img src="https://code-thinking.cdn.bcebos.com/pics/KMP%E7%B2%BE%E8%AE%B21.png" alt="KMP精讲1" style="zoom:50%;" />
 
-<img src="https://code-thinking.cdn.bcebos.com/pics/KMP%E7%B2%BE%E8%AE%B22.png" alt="KMP精讲2" style="zoom:50%;" />
-
-下标5之前这部分的字符串（也就是字符串aabaa）的最长相等的前缀 和 后缀字符串是 子字符串aa ，
+下标5之前这部分的字符串（也就是字符串aabaa）的最长相等的前缀 和 后缀字符串是 子字符串`aa` ，
 
 因为找到了最长相等的前缀和后缀，匹配**失败**的位置是**后缀子串的后面**，那么我们找到与其相同的**前缀的后面重新匹配**就可以了。
 
@@ -54,13 +52,13 @@ KMP的主要思想是**当出现字符串不匹配时，可以知道一部分之
 
 长度为3的字符串`aab`，最长相同前后缀的长度为0
 
-<img src="https://code-thinking.cdn.bcebos.com/pics/KMP%E7%B2%BE%E8%AE%B28.png" alt="KMP精讲8" style="zoom:50%;" />
+![image-20250214014841132](https://typora-image-jiege.oss-cn-hangzhou.aliyuncs.com/jiegeisstudyingjava-12581/image-20250214014841132.png)
 
 匹配过程
 
-<img src="https://code-thinking.cdn.bcebos.com/gifs/KMP%E7%B2%BE%E8%AE%B22.gif" alt="KMP精讲2" style="zoom: 80%;" />
+![KMP精讲2](https://code-thinking.cdn.bcebos.com/gifs/KMP%E7%B2%BE%E8%AE%B22.gif)
 
-当我们找到不匹配的位置时，我们就要找它的前一个字符的前缀表的数值是多少 ，是多少就从下标为多少的地方开始匹配。
+当我们找到不匹配的位置时，我们就要找**它的前一个字符的前缀表的数值是多少** ，是多少就从下标为多少的地方开始匹配。
 
 为什么要找前一个字符的呢？因为要找前面字符串的最长相同前后缀，所以要看前一位的前缀表的数值
 
@@ -70,7 +68,7 @@ KMP的主要思想是**当出现字符串不匹配时，可以知道一部分之
 
 以下我们以前缀表统一减一之后的next数组来做演示
 
-<img src="https://code-thinking.cdn.bcebos.com/gifs/KMP%E7%B2%BE%E8%AE%B24.gif" alt="KMP精讲4" style="zoom:80%;" />
+![KMP](https://code-thinking.cdn.bcebos.com/gifs/KMP%E7%B2%BE%E8%AE%B24.gif)
 
 
 
@@ -79,6 +77,8 @@ KMP的主要思想是**当出现字符串不匹配时，可以知道一部分之
 1. 初始化
 
    定义两个指针， j 指向前缀末尾位置， i 指向后缀末尾位置
+
+   next[i] 表示 i（包括i）之前最长相等的前后缀长度（其实就是j）
 
    ```java
    int j = -1;
@@ -101,7 +101,7 @@ KMP的主要思想是**当出现字符串不匹配时，可以知道一部分之
 
 ​	因为 j 指向前缀末尾位置，也就是前缀的长度
 
-3. 处理前后缀相同
+3.  处理前后缀相同
 
    如果 s[i] 与 s[j + 1] 相同，那么就同时向后移动i 和j 说明找到了相同的前后缀，
 
@@ -146,13 +146,14 @@ i就从0开始，遍历文本串
 int j = -1;
 for (int i = 0; i < s.length(); i++) {
     // 不匹配
-    while (j >= 0 && s.charAt(i) == t.charAt(j + 1))
+    while (j >= 0 && s.charAt(i) != t.charAt(j + 1))
         	j = next[j];
    	if (s.charAt(i) == t.charAt(j))
         	j++;
    	if (j == t.length() - 1)
         	return i - t.length() + 1;
 }
+return -1;
 ```
 
 
